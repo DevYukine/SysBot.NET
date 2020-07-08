@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -64,8 +64,8 @@ namespace SysBot.Pokemon.Discord
             const int gen = 8;
             content = ReusableActions.StripCodeBlock(content);
             
-            ushort? secretId = null;
-            uint? trainerId = null;
+            int? secretId = null;
+            int? trainerId = null;
             string? ot = null;
 			
             var showdownRows = new List<string>();
@@ -80,9 +80,9 @@ namespace SysBot.Pokemon.Discord
                 try
                 {
                     if (row.Contains("Secret Id:"))
-                        secretId = ushort.Parse(val);
+                        secretId = int.Parse(val);
                     else if (row.Contains("Trainer Id:"))
-                        trainerId = uint.Parse(val);
+                        trainerId = int.Parse(val);
                     else if (row.Contains("Trainer:")) 
                         ot = val;
                     else
