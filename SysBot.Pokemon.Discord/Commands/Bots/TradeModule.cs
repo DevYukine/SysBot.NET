@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -109,8 +109,8 @@ namespace SysBot.Pokemon.Discord
             var sav = AutoLegalityWrapper.GetTrainerInfo(gen);
 
             var pkm = sav.GetLegal(template, out _);
-            if (secretId != null) pkm.SID = (int) secretId;
-            if (trainerId != null) pkm.TID = (int) trainerId;
+            if (secretId != null) pkm.DisplaySID = (int) secretId;
+            if (trainerId != null) pkm.DisplayTID = (int) trainerId;
             if (ot != null) pkm.OT_Name = ot;
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
