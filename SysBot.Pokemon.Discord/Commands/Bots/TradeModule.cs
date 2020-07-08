@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -61,11 +63,45 @@ namespace SysBot.Pokemon.Discord
         {
             const int gen = 8;
             content = ReusableActions.StripCodeBlock(content);
-            var set = new ShowdownSet(content);
-            var template = AutoLegalityWrapper.GetTemplate(set);
-            if (set.InvalidLines.Count != 0)
+            
+            ushort? secretId = null;
+            uint? trainerId = null;
+            string? ot = null;
+			
+            var showdownRows = new List<string>();
+            var invalidExtraRows = new List<string>();
+
+            foreach (var row in content.Split('\n'))
             {
-                var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
+                var arr = row.Split(':');
+
+                var val = arr.Length == 2 ? arr[1].Trim() : "";
+
+                try
+                {
+                    if (row.Contains("Secret Id:"))
+                        secretId = ushort.Parse(val);
+                    else if (row.Contains("Trainer Id:"))
+                        trainerId = uint.Parse(val);
+                    else if (row.Contains("Trainer:")) 
+                        ot = val;
+                    else
+                        showdownRows.Add(row);
+                }
+                catch (Exception)
+                {
+                    invalidExtraRows.Add(row);
+                }
+            }
+            
+            var set = new ShowdownSet(string.Join("\n", showdownRows));
+            var template = AutoLegalityWrapper.GetTemplate(set);
+            var invalidLines = set.InvalidLines
+                .Concat(invalidExtraRows)
+                .ToArray();
+            if (invalidLines.Length != 0)
+            {
+                var msg = $"Unable to parse Showdown Set:\n{string.Join("\n", invalidLines)}";
                 await ReplyAsync(msg).ConfigureAwait(false);
                 return;
             }
@@ -73,6 +109,9 @@ namespace SysBot.Pokemon.Discord
             var sav = AutoLegalityWrapper.GetTrainerInfo(gen);
 
             var pkm = sav.GetLegal(template, out _);
+            if (secretId != null) pkm.SID = (int) secretId;
+            if (trainerId != null) pkm.TID = (int) trainerId;
+            if (ot != null) pkm.OT_Name = ot;
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
             var invalid = !(pkm is PK8) || (!la.Valid && SysCordInstance.Self.Hub.Config.Legality.VerifyLegality);
