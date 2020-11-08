@@ -181,11 +181,12 @@ namespace SysBot.Pokemon
 
         public async Task EnsureConnectedToYComm(PokeTradeHubConfig config, CancellationToken token)
         {
-            if (!await IsGameConnectedToYComm(token).ConfigureAwait(false))
+            // Ignored for Lan Trades
+            /*if (!await IsGameConnectedToYComm(token).ConfigureAwait(false))
             {
                 Log("Reconnecting to Y-Comm...");
                 await ReconnectToYComm(config, token).ConfigureAwait(false);
-            }
+            }*/
         }
 
         public async Task<bool> CheckTradePartnerName(TradeMethod tradeMethod, string Name, CancellationToken token)
