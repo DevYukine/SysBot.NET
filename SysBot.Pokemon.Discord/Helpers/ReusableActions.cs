@@ -74,9 +74,16 @@ namespace SysBot.Pokemon.Discord
             if (pkm.IsEgg)
                 newShowdown.Add("\nPokémon is an egg");
             if (pkm.Ball > (int)Ball.None)
-                newShowdown.Insert(newShowdown.FindIndex(z => z.Contains(" Nature")), $"Ball: {(Ball)pkm.Ball} Ball");
+                newShowdown.Insert(newShowdown.FindIndex(z => z.Contains("Nature")), $"Ball: {(Ball)pkm.Ball} Ball");
+            if (pkm.IsShiny)
+            {
+                var index = newShowdown.FindIndex(x => x.Contains("Shiny: Yes"));
+                if (pkm.ShinyXor == 0)
+                    newShowdown[index] = "Shiny: Square\r";
+                else newShowdown[index] = "Shiny: Star\r";
+            }
 
-            newShowdown.InsertRange(1, new string[] { $"OT: {pkm.OT_Name} (TID {pkm.DisplayTID} / SID {pkm.DisplaySID})", $"Language: {(LanguageID)pkm.Language}" });
+            newShowdown.InsertRange(1, new string[] { $"OT: {pkm.OT_Name}", $"TID: {pkm.DisplayTID}", $"SID: {pkm.DisplaySID}", $"OTGender: {(Gender)pkm.OT_Gender}", $"Language: {(LanguageID)pkm.Language}" });
             return Format.Code(string.Join("\n", newShowdown).TrimEnd());
         }
 

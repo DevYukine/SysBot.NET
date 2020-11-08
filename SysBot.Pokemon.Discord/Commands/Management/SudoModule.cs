@@ -42,23 +42,6 @@ namespace SysBot.Pokemon.Discord
             await Process(GetIDs(content), (z, x) => z.Remove(x), z => z.BlacklistedUsers).ConfigureAwait(false);
         }
 
-        [Command("clearcooldown")]
-        [Alias("cc")]
-        [Summary("Clears EggRoll cooldown of the mentioned user.")]
-        [RequireSudo]
-        // ReSharper disable once UnusedParameter.Global
-        public async Task ClearCooldown([Remainder] string id)
-        {
-            id = System.Text.RegularExpressions.Regex.Match(id, @"\D*(\d*)", System.Text.RegularExpressions.RegexOptions.Multiline).Groups[1].Value;
-            var line = TradeExtensions.EggRollCooldown.FirstOrDefault(z => z.Contains(id));
-            if (line != null)
-            {
-                TradeExtensions.EggRollCooldown.Remove(TradeExtensions.EggRollCooldown.FirstOrDefault(z => z.Contains(id)));
-                await ReplyAsync("Cooldown cleared.").ConfigureAwait(false);
-            }
-            else await ReplyAsync("User with that ID not found.").ConfigureAwait(false);
-        }
-
         protected async Task Process(IEnumerable<ulong> values, Func<SensitiveSet<ulong>, ulong, bool> process, Func<DiscordManager, SensitiveSet<ulong>> fetch)
         {
             var mgr = SysCordInstance.Manager;

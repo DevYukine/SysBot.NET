@@ -260,7 +260,7 @@ namespace SysBot.Pokemon
                 await Click(A, 1_000, token).ConfigureAwait(false);
             }
 
-            if (config.Trade.SpinTrade)
+            if (config.Trade.SpinTrade && Config.ConnectionType == ConnectionType.USB)
                 await SpinCorrection(token).ConfigureAwait(false);
         }
 
@@ -279,7 +279,7 @@ namespace SysBot.Pokemon
             }
 
             await Task.Delay(3_000, token).ConfigureAwait(false);
-            if (config.Trade.SpinTrade)
+            if (config.Trade.SpinTrade && Config.ConnectionType == ConnectionType.USB)
                 await SpinCorrection(token).ConfigureAwait(false);
         }
 

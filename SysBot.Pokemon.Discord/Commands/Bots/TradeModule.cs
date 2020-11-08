@@ -28,23 +28,6 @@ namespace SysBot.Pokemon.Discord
             await ReplyAsync("These are the users who are currently waiting:", embed: embed.Build()).ConfigureAwait(false);
         }
 
-        [Command("eggList")]
-        [Alias("el")]
-        [Summary("Prints the users in the EggRoll queue.")]
-        [RequireSudo]
-        public async Task GetEggRollListAsync()
-        {
-            string msg = Info.GetTradeList(PokeRoutineType.EggRoll);
-            var embed = new EmbedBuilder();
-            embed.AddField(x =>
-            {
-                x.Name = "Pending EggRoll Trades";
-                x.Value = msg;
-                x.IsInline = false;
-            });
-            await ReplyAsync("These are the users who are currently waiting:", embed: embed.Build()).ConfigureAwait(false);
-        }
-
         [Command("trade")]
         [Alias("t")]
         [Summary("Makes the bot trade you the provided Pokémon file.")]
@@ -128,94 +111,6 @@ namespace SysBot.Pokemon.Discord
         {
             var code = Info.GetRandomTradeCode();
             await TradeAsyncAttach(code).ConfigureAwait(false);
-        }
-
-        [Command("eggroll")]
-        [Alias("roll", "r")]
-        [Summary("Makes the bot trade you a randomly generated egg.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesEggRoll))]
-        public async Task EggRollAsync()
-        {
-            if (!Info.Hub.Config.Trade.EggRollChannels.Contains(Context.Channel.Id.ToString()) && !Info.Hub.Config.Trade.EggRollChannels.Equals(""))
-            {
-                await ReplyAsync($"You're typing the command in the wrong channel!").ConfigureAwait(false);
-                return;
-            }
-
-            if (Info.Hub.Config.Trade.EggRollCooldown < 0)
-                Info.Hub.Config.Trade.EggRollCooldown = default;
-
-            var id = Context.User.Id.ToString();
-            var line = TradeExtensions.EggRollCooldown.FirstOrDefault(z => z.Contains(id));
-            System.DateTime.TryParse(line != null ? line.Split(',')[1] : string.Empty, out System.DateTime time);
-            var timer = time.AddHours(Info.Hub.Config.Trade.EggRollCooldown);
-            var timeRemaining = timer - System.DateTime.Now;
-
-            if (System.DateTime.Now < timer)
-            {
-                await ReplyAsync($"{Context.User.Mention}, please try again in {timeRemaining.Hours:N0}h : {timeRemaining.Minutes:N0}m : {timeRemaining.Seconds:N0}s!").ConfigureAwait(false);
-                return;
-            }
-
-            var code = Info.GetRandomTradeCode();
-            var rng = new System.Random();
-            int shinyRng = rng.Next(0, TradeExtensions.shinyOdds.Length);
-            int abilityRng = rng.Next(0, TradeExtensions.abilityIndex.Length);
-            var set = new ShowdownSet($"Egg({SpeciesName.GetSpeciesName((int)TradeExtensions.validEgg.GetValue(rng.Next(0, TradeExtensions.validEgg.Length)), 2)})");
-            var template = AutoLegalityWrapper.GetTemplate(set);
-            var sav = AutoLegalityWrapper.GetTrainerInfo(8);
-            var pkm = (PK8)sav.GetLegal(template, out _);
-
-            if (TradeExtensions.regional.ToList().Contains(pkm.Species))
-            {
-                int formRng = rng.Next(0, TradeExtensions.formIndex1.Length);
-                int formRng2 = rng.Next(0, TradeExtensions.formIndex2.Length);
-
-                if (pkm.Species != 52)
-                    pkm.SetAltForm(TradeExtensions.formIndex1[formRng]);
-                else pkm.SetAltForm(TradeExtensions.formIndex2[formRng2]);
-
-                if (pkm.AltForm != 0)
-                {
-                    switch (pkm.Species)
-                    {
-                        case 27: pkm.RelearnMove3 = 10; break;
-                        case 37: pkm.RelearnMove4 = 39; break;
-                        case 52: pkm.RelearnMove2 = 252; pkm.RelearnMove3 = 45; break;
-                        case 83: pkm.RelearnMove1 = 64; pkm.RelearnMove4 = 28; break;
-                        case 222: pkm.RelearnMove1 = 33; break;
-                        case 263: pkm.RelearnMove2 = 43; pkm.RelearnMove3 = 0; pkm.RelearnMove4 = 0; break;
-                    };
-                }
-            }
-
-            TradeExtensions.EggTrade(pkm);
-            pkm.Nature = rng.Next(0, 24);
-            pkm.StatNature = pkm.Nature;
-            pkm.SetAbilityIndex(TradeExtensions.abilityIndex[abilityRng]);
-            pkm.IVs = pkm.SetRandomIVs(3);
-            BallApplicator.ApplyBallLegalRandom(pkm);
-
-            switch (TradeExtensions.shinyOdds[shinyRng])
-            {
-                case 3: CommonEdits.SetShiny(pkm, Shiny.Never); pkm.SetUnshiny(); break;
-                case 5: CommonEdits.SetShiny(pkm, Shiny.AlwaysStar); break;
-                case 6: CommonEdits.SetShiny(pkm, Shiny.AlwaysSquare); break;
-            };
-
-            var la = new LegalityAnalysis(pkm);
-            var spec = GameInfo.Strings.Species[template.Species];
-            var invalid = !(pkm is PK8) || (!la.Valid && SysCordInstance.Self.Hub.Config.Legality.VerifyLegality);
-            if (invalid)
-            {
-                var imsg = $"Oops! I scrambled your egg! Don't tell Ramsay! Here's my best attempt for that {spec}!";
-                await Context.Channel.SendPKMAsync(pkm, imsg).ConfigureAwait(false);
-                return;
-            }
-
-            pkm.ResetPartyStats();
-            var sig = Context.User.GetFavor();
-            await Context.AddToQueueAsync(code, Context.User.Username, sig, pkm, PokeRoutineType.EggRoll, PokeTradeType.EggRoll).ConfigureAwait(false);
         }
 
         private async Task AddTradeToQueueAsync(int code, string trainerName, PK8 pk8, RequestSignificance sig)

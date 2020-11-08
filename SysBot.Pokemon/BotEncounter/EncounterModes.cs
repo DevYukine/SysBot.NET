@@ -23,8 +23,18 @@
         LegendaryDogs,
 
         /// <summary>
-        /// Bot will soft reset Strong Spawns
+        /// Bot will soft reset Regis
         /// </summary>
-        StrongSpawn,
+        Regi,
+
+        /// <summary>
+        /// Bot will soft reset Regigigas
+        /// </summary>
+        Regigigas,
+
+        /// <summary>
+        /// Bot will soft reset Swords of Justices by entering and leaving camp
+        /// </summary>
+        SoJCamp,
     }
 }

@@ -81,8 +81,8 @@ namespace SysBot.Pokemon.Discord
                 ticketID = $", unique ID: {detail.ID}";
 
             var pokeName = "";
-            if (t == PokeTradeType.Specific || t == PokeTradeType.EggRoll && pk8.Species != 0)
-                pokeName = $" Receiving: {(t == PokeTradeType.EggRoll ? "Mysterious egg" : hub.Config.Trade.ItemMuleSpecies == (Species)pk8.Species && pk8.HeldItem != 0 ? $"{(Species)pk8.Species + " (" + ShowdownSet.GetShowdownText(pk8).Split('@','\n')[1].Trim() + ")"}" : $"{(Species)pk8.Species}")}.";
+            if (t == PokeTradeType.Specific || t == PokeTradeType.TradeCord && pk8.Species != 0)
+                pokeName = $" Receiving: {(hub.Config.Trade.ItemMuleSpecies == (Species)pk8.Species && pk8.HeldItem != 0 ? $"{(Species)pk8.Species + " (" + ShowdownSet.GetShowdownText(pk8).Split('@','\n')[1].Trim() + ")"}" : $"{(Species)pk8.Species}")}.";
             msg = $"{user.Mention} - Added to the {type} queue{ticketID}. Current Position: {position.Position}.{pokeName}";
 
             var botct = Info.Hub.Bots.Count;

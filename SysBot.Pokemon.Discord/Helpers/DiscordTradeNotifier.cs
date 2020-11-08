@@ -46,23 +46,26 @@ namespace SysBot.Pokemon.Discord
         {
             OnFinish?.Invoke(routine);
             var tradedToUser = Data.Species;
-            string message;
-
-            if (Data.IsEgg && info.Type == PokeTradeType.EggRoll)
-                message = tradedToUser != 0 ? $"Trade finished. Enjoy your Mysterious egg!" : "Trade finished!";
-            else message = tradedToUser != 0 ? $"Trade finished. Enjoy your {(Species)tradedToUser}!" : "Trade finished!";
+            string message = tradedToUser != 0 ? $"Trade finished. Enjoy your {(Species)tradedToUser}!" : "Trade finished!";
 
             Context.User.SendMessageAsync(message).ConfigureAwait(false);
             if (result.Species != 0 && Hub.Config.Discord.ReturnPK8s)
                 Context.User.SendPKMAsync(result, "Here's what you traded me!").ConfigureAwait(false);
 
-            if (info.Type == PokeTradeType.EggRoll && Hub.Config.Trade.EggRollCooldown > 0) // Add cooldown if trade completed
+            if (info.Type == PokeTradeType.TradeCord)
             {
-                var id = Context.User.Id.ToString();
-                var line = TradeExtensions.EggRollCooldown.FirstOrDefault(z => z.Contains(id));
-                if (line != null)
-                    TradeExtensions.EggRollCooldown.Remove(TradeExtensions.EggRollCooldown.FirstOrDefault(z => z.Contains(id)));
-                TradeExtensions.EggRollCooldown.Add($"{id},{DateTime.Now}");
+                var user = Context.User.Id.ToString();
+                var original = TradeExtensions.TradeCordPath.FirstOrDefault(x => x.Contains(user));
+                TradeExtensions.TradeCordPath.Remove(original);
+                try
+                {
+                    System.IO.File.Move(original, System.IO.Path.Combine($"TradeCord\\Backup\\{user}", original.Split('\\')[2]));
+                }
+                catch (Exception ex)
+                {
+                    Base.LogUtil.LogText("Error occurred: " + ex.InnerException);
+                    TradeExtensions.TradeCordPath.RemoveAll(x => x.Contains(user));
+                }
             }
         }
 

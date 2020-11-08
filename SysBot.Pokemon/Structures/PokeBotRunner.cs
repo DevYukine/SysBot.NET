@@ -99,7 +99,7 @@ namespace SysBot.Pokemon
                 case PokeRoutineType.LinkTrade:
                 case PokeRoutineType.Clone:
                 case PokeRoutineType.FixOT:
-                case PokeRoutineType.EggRoll:
+                case PokeRoutineType.TradeCord:
                 case PokeRoutineType.Dump:
                 case PokeRoutineType.SeedCheck:
                     return new PokeTradeBot(Hub, cfg);

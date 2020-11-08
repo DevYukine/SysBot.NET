@@ -7,7 +7,7 @@
         Seed,
         Clone,
         FixOT,
-        EggRoll,
+        TradeCord,
         Dump,
     }
 }

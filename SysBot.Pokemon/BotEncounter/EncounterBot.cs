@@ -50,7 +50,9 @@ namespace SysBot.Pokemon
                 EncounterMode.HorizontalLine => WalkInLine(token),
                 EncounterMode.Eternatus => DoEternatusEncounter(token),
                 EncounterMode.LegendaryDogs => DoDogEncounter(token),
-                EncounterMode.StrongSpawn => DoStrongSpawnEncounter(token),
+                EncounterMode.Regi => DoRegiEncounter(token),
+                EncounterMode.Regigigas => DoRegiEncounter(token),
+                EncounterMode.SoJCamp => DoSoJCampEncounter(token),
                 _ => WalkInLine(token),
             };
             await task.ConfigureAwait(false);
@@ -227,7 +229,8 @@ namespace SysBot.Pokemon
 
             if (StopConditionSettings.EncounterFound(pk, DesiredIVs, Hub.Config.StopConditions))
             {
-                Log(!Hub.Config.StopConditions.CatchEncounter || Hub.Config.Encounter.EncounteringType == EncounterMode.StrongSpawn ? $"{Ping}Result found! Stopping routine execution; restart the bot(s) to search again." : "Result found! Attempting to catch...");
+                Log(Hub.Config.StopConditions.CatchEncounter && (Hub.Config.Encounter.EncounteringType == EncounterMode.VerticalLine || Hub.Config.Encounter.EncounteringType == EncounterMode.HorizontalLine) ?
+                    "Result found! Attempting to catch..." : $"{Ping}Result found! Stopping routine execution; restart the bot(s) to search again.");
                 if (Hub.Config.StopConditions.CaptureVideoClip)
                 {
                     await Task.Delay(Hub.Config.StopConditions.ExtraTimeWaitCaptureVideo).ConfigureAwait(false);
@@ -316,14 +319,14 @@ namespace SysBot.Pokemon
             }
         }
 
-        private async Task DoStrongSpawnEncounter(CancellationToken token)
+        private async Task DoRegiEncounter(CancellationToken token)
         {
             while (!token.IsCancellationRequested && Config.NextRoutineType == PokeRoutineType.EncounterBot)
             {
                 while (!await IsInBattle(token).ConfigureAwait(false))
                     await Click(A, 2_000, token).ConfigureAwait(false);
 
-                var pk = await ReadUntilPresent(WildPokemonOffset, 2_000, 0_200, token).ConfigureAwait(false);
+                var pk = await ReadUntilPresent(Hub.Config.Encounter.EncounteringType == EncounterMode.Regi ? WildPokemonOffset : RaidPokemonOffset, 2_000, 0_200, token).ConfigureAwait(false);
                 if (pk == null)
                 {
                     Log("Invalid data detected. Restarting loop.");
@@ -349,6 +352,46 @@ namespace SysBot.Pokemon
 
                 for (int i = 0; i < 5; i++)
                     await Click(A, 1_000, token).ConfigureAwait(false);
+            }
+        }
+
+        private async Task DoSoJCampEncounter(CancellationToken token)
+        {
+            bool campEntered = false;
+            while (!token.IsCancellationRequested && Config.NextRoutineType == PokeRoutineType.EncounterBot)
+            {
+                await Click(X, 2_000, token).ConfigureAwait(false);
+                if (!campEntered)
+                {
+                    await Click(DDOWN, 0_600, token).ConfigureAwait(false);
+                    await Click(DRIGHT, 0_600, token).ConfigureAwait(false);
+                    campEntered = true;
+                }
+
+                await Click(A, 12_000, token).ConfigureAwait(false);
+                await Click(B, 2_000, token).ConfigureAwait(false);
+                await Click(A, 0_500, token).ConfigureAwait(false);
+
+                while (!await IsInBattle(token).ConfigureAwait(false))
+                    await Task.Delay(2_000).ConfigureAwait(false);
+
+                var pk = await ReadUntilPresent(WildPokemonOffset, 2_000, 0_200, token).ConfigureAwait(false);
+                if (pk == null)
+                {
+                    Log("Invalid data detected. Restarting loop.");
+                    continue;
+                }
+                else
+                {
+                    if (await HandleEncounter(pk, true, token).ConfigureAwait(false))
+                        return;
+                }
+
+                while (await IsInBattle(token).ConfigureAwait(false))
+                    await FleeToOverworld(token).ConfigureAwait(false);
+
+                while (!await IsOnOverworld(Hub.Config, token).ConfigureAwait(false))
+                    await Task.Delay(2_000).ConfigureAwait(false);
             }
         }
     }

@@ -237,7 +237,7 @@ namespace SysBot.Pokemon
             }
 
             // Confirm Box 1 Slot 1
-            if (poke.Type == PokeTradeType.Specific || poke.Type == PokeTradeType.EggRoll)
+            if (poke.Type == PokeTradeType.Specific || poke.Type == PokeTradeType.TradeCord)
             {
                 for (int i = 0; i < 5; i++)
                     await Click(A, 0_500, token).ConfigureAwait(false);
@@ -436,8 +436,8 @@ namespace SysBot.Pokemon
                     counts.AddCompletedClones();
                 else if (poke.Type == PokeTradeType.FixOT)
                     counts.AddCompletedFixOTs();
-                else if (poke.Type == PokeTradeType.EggRoll)
-                    counts.AddCompletedEggRolls();
+                else if (poke.Type == PokeTradeType.TradeCord)
+                    counts.AddCompletedTradeCords();
                 else
                     Hub.Counts.AddCompletedTrade();
 
@@ -445,7 +445,7 @@ namespace SysBot.Pokemon
                 {
                     var subfolder = poke.Type.ToString().ToLower();
                     DumpPokemon(DumpSetting.DumpFolder, subfolder, traded); // received
-                    if (poke.Type == PokeTradeType.Specific || poke.Type == PokeTradeType.Clone || poke.Type == PokeTradeType.FixOT || poke.Type == PokeTradeType.EggRoll)
+                    if (poke.Type == PokeTradeType.Specific || poke.Type == PokeTradeType.Clone || poke.Type == PokeTradeType.FixOT || poke.Type == PokeTradeType.TradeCord)
                         DumpPokemon(DumpSetting.DumpFolder, "traded", pkm); // sent to partner
                 }
             }
@@ -608,7 +608,7 @@ namespace SysBot.Pokemon
 
             if (await IsOnOverworld(Hub.Config, token).ConfigureAwait(false))
             {
-                if (Hub.Config.Trade.SpinTrade)
+                if (Hub.Config.Trade.SpinTrade && Config.ConnectionType == ConnectionType.USB)
                     await SpinCorrection(token).ConfigureAwait(false);
                 Log("Trade complete!");
             }
