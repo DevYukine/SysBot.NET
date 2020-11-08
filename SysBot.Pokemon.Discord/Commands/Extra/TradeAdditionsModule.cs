@@ -393,7 +393,7 @@ namespace SysBot.Pokemon.Discord
             }
 
             var species = SpeciesName.GetSpeciesID(name.Split('-')[0].Trim());
-            if (species == -1 && !name.Contains("Nidoran") && !name.Contains("Egg"))
+            if (species == -1 && !name.Contains("Nidoran") && !name.Contains("Egg") && !name.Contains("Shinies"))
             {
                 await Context.Message.Channel.SendMessageAsync("Not a valid Pokémon").ConfigureAwait(false);
                 return;
