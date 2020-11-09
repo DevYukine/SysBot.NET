@@ -173,7 +173,7 @@ namespace SysBot.Pokemon
             var species1 = int.Parse(content[1].Split('_')[content[1].Contains("★") ? 2 : 1].Trim());
             var species2 = int.Parse(content[2].Split('_')[content[2].Contains("★") ? 2 : 1].Trim());
             bool specificEgg = (species1 == species2 && ValidEgg.Contains(species1)) || ((species1 == 132 || species2 == 132) && (ValidEgg.Contains(species1) || ValidEgg.Contains(species2)));
-            var shinyRng = rng.Next(content[1].Contains("★") && content[2].Contains("★") ? 25 : 0, 100);
+            var shinyRng = rng.Next(content[1].Contains("★") && content[2].Contains("★") ? 15 : 0, 150);
             var ballRng = rng.Next(1, 2);
             var speciesRng = specificEgg ? SpeciesName.GetSpeciesNameGeneration(species1 == 132 && species2 != 132 ? species2 : species1, 2, 8) : SpeciesName.GetSpeciesNameGeneration((int)ValidEgg.GetValue(rng.Next(0, ValidEgg.Length - 1)), 2, 8);
 
@@ -212,9 +212,9 @@ namespace SysBot.Pokemon
             if (!pkm.ValidBall())
                 BallApplicator.ApplyBallLegalRandom(pkm);
 
-            if (shinyRng > 98)
+            if (shinyRng > 148)
                 CommonEdits.SetShiny(pkm, Shiny.AlwaysSquare);
-            else if (shinyRng > 95)
+            else if (shinyRng > 145)
                 CommonEdits.SetShiny(pkm, Shiny.AlwaysStar);
 
             return pkm;

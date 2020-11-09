@@ -259,7 +259,7 @@ namespace SysBot.Pokemon.Discord
             else
             {
                 var spookyRng = rng.Next(0, 100);
-                var imgRng = rng.Next(1, 2);
+                var imgRng = rng.Next(1, 3);
                 string imgGarf = "https://i.imgur.com/BOb6IbW.png";
                 string imgConk = "https://i.imgur.com/oSUQhYv.png";
                 var embedFail = new EmbedBuilder { Color = Color.Teal, ImageUrl = spookyRng > 90 && imgRng == 1 ? imgGarf : spookyRng > 90 && imgRng == 2 ? imgConk : string.Empty };
@@ -267,12 +267,12 @@ namespace SysBot.Pokemon.Discord
                 embedFail.AddField(x =>
                 {
                     x.Name = $"{Context.User.Username}'s Catch";
-                    x.Value = $"You threw a {(ball == Ball.Cherish ? Ball.Poke : ball)} Ball at a wild {(spookyRng > 90 ? "...whatever that thing is" : SpeciesName.GetSpeciesNameGeneration(speciesRng, 2, 8))}...";
+                    x.Value = $"You threw a {(ball == Ball.Cherish ? Ball.Poke : ball)} Ball at a wild {(spookyRng > 90 && imgRng != 3 ? "...whatever that thing is" : SpeciesName.GetSpeciesNameGeneration(speciesRng, 2, 8))}...";
                     x.IsInline = false;
                 }).AddField(x =>
                 {
                     x.Name = "Results";
-                    x.Value = $"{(spookyRng > 90 ? "One wiggle... Two... It breaks free and stares at you, smiling. You run for dear life." : "...but it managed to escape!")}";
+                    x.Value = $"{(spookyRng > 90 && imgRng != 3 ? "One wiggle... Two... It breaks free and stares at you, smiling. You run for dear life." : "...but it managed to escape!")}";
                     x.IsInline = false;
                 });
 
@@ -528,12 +528,25 @@ namespace SysBot.Pokemon.Discord
             var content = File.ReadAllText($"TradeCord\\{user}.txt").Split(',').ToList();
             var id1 = content[1].Split('_')[content[1].Contains("★") ? 1 : 0];
             var id2 = content[2].Split('_')[content[2].Contains("★") ? 1 : 0];
+            List<string> favorites = new List<string>();
+            if (content.Count > 7)
+            {
+                for (int i = 7; i < content.Count; i++)
+                    favorites.Add(content[i]);
+            }
+
             List<string> path = Directory.GetFiles(Path.Combine("TradeCord", user)).Where(x => !x.Split('\\')[2].Contains("★") && !x.Split('\\')[2].Contains("Ditto") &&
             !x.Split('\\')[2].Split('-')[0].Replace("★", "").Trim().Equals(id1) && !x.Split('\\')[2].Split('-')[0].Replace("★", "").Trim().Equals(id2)).ToList();
-            
+
+            foreach (var fav in favorites)
+            {
+                var match = path.Find(x => x.Split('\\')[2].Split('-')[0].Replace("★", "").Trim() == fav.Replace("★", "").Trim());
+                path.Remove(match);
+            }
+
             if (path.Count == 0)
             {
-                await Context.Message.Channel.SendMessageAsync("Cannot find any more non-shiny, non-Ditto Pokémon to release.").ConfigureAwait(false);
+                await Context.Message.Channel.SendMessageAsync("Cannot find any more non-shiny, non-Ditto, non-favorite Pokémon to release.").ConfigureAwait(false);
                 return;
             }
 
@@ -567,6 +580,13 @@ namespace SysBot.Pokemon.Discord
             var user = Context.User.Id.ToString();
             var content = File.ReadAllText($"TradeCord\\{user}.txt").Split(',').ToList();
             List<string> path = Directory.GetFiles(Path.Combine("TradeCord", user)).Where(x => x.Split('\\')[2].Split('-')[0].Replace("★", "").Trim().Equals(id)).ToList();
+            List<string> favorites = new List<string>();
+            if (content.Count > 7)
+            {
+                for (int i = 7; i < content.Count; i++)
+                    favorites.Add(content[i]);
+            }
+
             if (content[1] != "0" || content[2] != "0")
             {
                 var shiny1 = content[1].Contains("★");
@@ -576,6 +596,14 @@ namespace SysBot.Pokemon.Discord
                     await Context.Message.Channel.SendMessageAsync("Cannot release a Pokémon in daycare.").ConfigureAwait(false);
                     return;
                 }
+            }
+
+            string? fav = favorites.Count > 0 ? favorites.Find(x => x.Replace("★", "").Trim().Equals(id)) : "";
+            fav = fav != null ? fav.Replace("★", "").Trim() : fav;
+            if (fav == id)
+            {
+                await Context.Message.Channel.SendMessageAsync("Cannot release a Pokémon added to favorites.").ConfigureAwait(false);
+                return;
             }
             else if (path.Count == 0)
             {
@@ -879,6 +907,87 @@ namespace SysBot.Pokemon.Discord
             });
 
             await Context.Message.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        [Command("TradeCordFavorites")]
+        [Alias("fav")]
+        [Summary("Display favorites list.")]
+        [RequireQueueRole(nameof(DiscordManager.RolesTradeCord))]
+        public async Task TradeCordFavorites()
+        {
+            TradeCordParanoiaChecks(Context);
+            var user = Context.User.Id.ToString();
+            var content = File.ReadAllText($"TradeCord\\{user}.txt").Split(',').ToList();
+            List<string> favorites = new List<string>();
+            if (content.Count > 7)
+            {
+                for (int i = 7; i < content.Count; i++)
+                    favorites.Add(content[i]);
+            }
+            else
+            {
+                await Context.Message.Channel.SendMessageAsync($"You don't have anything in favorites yet!").ConfigureAwait(false);
+                return;
+            }
+
+            var embed = new EmbedBuilder { Color = Color.DarkBlue };
+            embed.AddField(x =>
+            {
+                x.Name = $"{Context.User.Username}'s Favorites";
+                x.Value = $"{string.Join(", ", favorites)}";
+                x.IsInline = false;
+            });
+
+            await Context.Message.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        [Command("TradeCordFavorites")]
+        [Alias("fav")]
+        [Summary("Add/Remove a Pokémon to a favorites list.")]
+        [RequireQueueRole(nameof(DiscordManager.RolesTradeCord))]
+        public async Task TradeCordFavorites([Summary("Catch ID")] string id)
+        {
+            TradeCordParanoiaChecks(Context);
+            if (!int.TryParse(id, out int _int))
+            {
+                await Context.Message.Channel.SendMessageAsync("Please enter a numerical catch ID.").ConfigureAwait(false);
+                return;
+            }
+
+            var user = Context.User.Id.ToString();
+            var content = File.ReadAllText($"TradeCord\\{user}.txt").Split(',').ToList();
+            List<string> path = Directory.GetFiles(Path.Combine("TradeCord", user)).Where(x => !x.Contains("★") ? x.Split('\\')[2].Split('-')[0].Trim().Equals(id) : x.Split('\\')[2].Split('-')[0].Replace("★", "").Trim().Equals(id)).ToList();
+            if (path.Count == 0)
+            {
+                await Context.Message.Channel.SendMessageAsync("Cannot find this Pokémon.").ConfigureAwait(false);
+                return;
+            }
+
+            List<string> favorites = new List<string>();
+            if (content.Count > 7)
+            {
+                for (int i = 7; i < content.Count; i++)
+                    favorites.Add(content[i]);
+            }
+
+            string? fav = favorites.Count > 0 ? favorites.Find(x => x.Replace("★", "").Trim().Equals(id)) : "";
+            fav = fav != null ? fav.Replace("★", "").Trim() : fav;
+            var split = path[0].Split('\\')[2];
+            var name = split.Split('-')[1].Replace(".pk8", "").Trim();
+            if (fav != id)
+            {
+                content.Add(split.Split('.')[0].Split('-')[0].Trim());
+                File.WriteAllText($"TradeCord\\{Context.User.Id}.txt", string.Join(",", content));
+                await Context.Message.Channel.SendMessageAsync($"{Context.User.Username}, added your {(split.Contains("★") ? "★" + name : name)} to favorites!").ConfigureAwait(false);
+                return;
+            }
+            else if (fav == id)
+            {
+                content.Remove(split.Split('.')[0].Split('-')[0].Trim());
+                File.WriteAllText($"TradeCord\\{Context.User.Id}.txt", string.Join(",", content));
+                await Context.Message.Channel.SendMessageAsync($"{Context.User.Username}, removed your {(split.Contains("★") ? "★" + name : name)} from favorites!").ConfigureAwait(false);
+                return;
+            }
         }
 
         private void TradeCordDump(string folder, string subfolder, PKM pkm, out int index)
